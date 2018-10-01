@@ -103,10 +103,12 @@ public class LoginActivity extends AppCompatActivity {
                             } else {
                                 // Result is NOT "OK"
                                 String error = json.getString("error");
-                                Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show(); // This will show the user what went wrong with a toast
-                                Intent to_main = new Intent(getApplicationContext(), MainActivity.class); // New intent to MainActivity
-                                startActivity(to_main); // Starts MainActivity
-                                finish(); // Add this to prevent the user to go back to this activity when pressing the back button after we've opened MainActivity
+                                Toast.makeText(getApplicationContext(), "Invalid Credentials", Toast.LENGTH_LONG).show(); // This will show the user what went wrong with a toast
+                                finish();
+                                startActivity(getIntent());
+                                //Intent to_main = new Intent(getApplicationContext(), MainActivity.class); // New intent to MainActivity
+                                //startActivity(to_main); // Starts MainActivity
+                                //finish(); // Add this to prevent the user to go back to this activity when pressing the back button after we've opened MainActivity
                             }
                         } catch (JSONException err){
                             // This method will run if something goes wrong with the json, like a typo to the json-key or a broken JSON.
@@ -120,7 +122,7 @@ public class LoginActivity extends AppCompatActivity {
                 new Runnable() {
                     public void run() {
                         // On complete call either onLoginSuccess or onLoginFailed
-                        onLoginSuccess();
+                        //onLoginSuccess();
                         // onLoginFailed();
                         progressDialog.dismiss();
                     }
@@ -149,13 +151,17 @@ public class LoginActivity extends AppCompatActivity {
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
         Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
+        Intent cart_info = new Intent(getApplicationContext(), CartInfo.class); // New intent to CartInfo
+        startActivity(cart_info); // Starts MainActivity
+        //Intent intent = new Intent(this, CartInfo.class);
+        //startActivity(intent);
         //finish();
     }
 
     public void onLoginFailed() {
         Toast.makeText(getBaseContext(), "Login failed", Toast.LENGTH_LONG).show();
 
-        _loginButton.setEnabled(true);
+        //_loginButton.setEnabled(true);
     }
 
     public boolean validate() {
