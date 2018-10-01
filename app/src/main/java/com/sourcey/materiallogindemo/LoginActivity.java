@@ -13,6 +13,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -20,7 +26,7 @@ public class LoginActivity extends AppCompatActivity {
     private static final String TAG = "LoginActivity";
     private static final int REQUEST_SIGNUP = 0;
 
-    @BindView(R.id.input_username) EditText _userNameText;
+    @BindView(R.id.input_email) EditText _emailText;
     @BindView(R.id.input_password) EditText _passwordText;
     @BindView(R.id.btn_login) Button _loginButton;
     @BindView(R.id.link_signup) TextView _signupLink;
@@ -69,10 +75,46 @@ public class LoginActivity extends AppCompatActivity {
         progressDialog.setMessage("Authenticating...");
         progressDialog.show();
 
-        String username = _userNameText.getText().toString();
+        String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
         // TODO: Implement your own authentication logic here.
+        Log.d("Message","Authenticating");
+        Ion.with(getApplicationContext())
+                .load("http://139.59.15.209:5000/auth/login")
+                .setBodyParameter("email", email)
+                .setBodyParameter("password", password)
+                .asString()
+                .setCallback(new FutureCallback<String>() {
+                    @Override
+                    public void onCompleted(Exception e, String result) {
+                        try {
+                            JSONObject json = new JSONObject(result);    // Converts the string "result" to a JSONObject
+                            Log.d("JSON", json.toString());
+                            String json_result = json.getString("status"); // Get the string "result" inside the Json-object
+                            if (json_result.equalsIgnoreCase("Success")){ // Checks if the "result"-string is equals to "ok"
+                                // Result is "OK"
+                                //int customer_id = json.getInt("customer_id"); // Get the int customer_id
+                                String customer_email = json.getString("email"); // I don't need to explain this one, right?
+                                Log.d(TAG, customer_email);
+                                Log.d("Message","Successful");
+                                onLoginSuccess();
+
+                            } else {
+                                // Result is NOT "OK"
+                                String error = json.getString("error");
+                                Toast.makeText(getApplicationContext(), error, Toast.LENGTH_LONG).show(); // This will show the user what went wrong with a toast
+                                Intent to_main = new Intent(getApplicationContext(), MainActivity.class); // New intent to MainActivity
+                                startActivity(to_main); // Starts MainActivity
+                                finish(); // Add this to prevent the user to go back to this activity when pressing the back button after we've opened MainActivity
+                            }
+                        } catch (JSONException err){
+                            // This method will run if something goes wrong with the json, like a typo to the json-key or a broken JSON.
+                            Log.e(TAG, err.getMessage());
+                            Toast.makeText(getApplicationContext(), "Please check your internet connection.", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
@@ -106,7 +148,8 @@ public class LoginActivity extends AppCompatActivity {
 
     public void onLoginSuccess() {
         _loginButton.setEnabled(true);
-        finish();
+        Toast.makeText(this, "Login Successful", Toast.LENGTH_SHORT).show();
+        //finish();
     }
 
     public void onLoginFailed() {
@@ -118,14 +161,14 @@ public class LoginActivity extends AppCompatActivity {
     public boolean validate() {
         boolean valid = true;
 
-        String username = _userNameText.getText().toString();
+        String email = _emailText.getText().toString();
         String password = _passwordText.getText().toString();
 
-        if (username.isEmpty()) {
-            _userNameText.setError("enter a valid email address");
+        if (email.isEmpty()) {
+            _emailText.setError("enter a valid email address");
             valid = false;
         } else {
-            _userNameText.setError(null);
+            _emailText.setError(null);
         }
 
         if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
