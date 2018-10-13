@@ -76,7 +76,7 @@ public class CartInfo extends AppCompatActivity implements SensorEventListener, 
                 .setCancelable(false)
                 .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        //Toast.makeText(CartInfo.this, "New Cart Ordered", Toast.LENGTH_SHORT).show();
+                        orderCart();
                     }
                 })
                 .setNegativeButton("No", new DialogInterface.OnClickListener() {
@@ -141,13 +141,66 @@ public class CartInfo extends AppCompatActivity implements SensorEventListener, 
 
     }
 
+    public void orderCart(){
+        try {
+            RequestQueue requestQueue = Volley.newRequestQueue(this);
+            String URL = "http://139.59.15.209:5000/startCart";
+            JSONObject jsonBody = new JSONObject();
+            jsonBody.put("cartID", "1");
+            jsonBody.put("name","");
+            final String requestBody = jsonBody.toString();
+
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, URL, new Response.Listener<String>() {
+                @Override
+                public void onResponse(String response) {
+                    Log.i("VOLLEY", response);
+                }
+            }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.e("VOLLEY", error.toString());
+                }
+            }) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
+                }
+
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    try {
+                        return requestBody == null ? null : requestBody.getBytes("utf-8");
+                    } catch (UnsupportedEncodingException uee) {
+                        VolleyLog.wtf("Unsupported Encoding while trying to get the bytes of %s using %s", requestBody, "utf-8");
+                        return null;
+                    }
+                }
+
+                @Override
+                protected Response<String> parseNetworkResponse(NetworkResponse response) {
+                    String responseString = "";
+                    if (response != null) {
+                        responseString = String.valueOf(response.statusCode);
+                        // can get more details such as response.headers
+                    }
+                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+                }
+            };
+
+            requestQueue.add(stringRequest);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void getDistance(){
         try {
             RequestQueue requestQueue = Volley.newRequestQueue(this);
             String URL = "http://139.59.15.209:5000/sendDirection";
+            Toast.makeText(CartInfo.this, direction+": "+numSteps, Toast.LENGTH_SHORT).show();
             JSONObject jsonBody = new JSONObject();
             jsonBody.put("direction", String.valueOf(direction));
-            jsonBody.put("distance", String.valueOf(numSteps));
+            jsonBody.put("distance", String.valueOf(Math.round(numSteps*76.2)));
             jsonBody.put("cartID", "1");
             final String requestBody = jsonBody.toString();
 
