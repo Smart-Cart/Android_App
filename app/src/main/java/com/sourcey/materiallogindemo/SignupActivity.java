@@ -12,6 +12,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.koushikdutta.async.future.FutureCallback;
+import com.koushikdutta.ion.Ion;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
@@ -20,7 +26,6 @@ public class SignupActivity extends AppCompatActivity {
 
     @BindView(R.id.input_name) EditText _nameText;
     @BindView(R.id.input_email) EditText _emailText;
-    @BindView(R.id.input_mobile) EditText _mobileText;
     @BindView(R.id.input_password) EditText _passwordText;
     @BindView(R.id.input_reEnterPassword) EditText _reEnterPasswordText;
     @BindView(R.id.btn_signup) Button _signupButton;
@@ -70,18 +75,56 @@ public class SignupActivity extends AppCompatActivity {
 
         String name = _nameText.getText().toString();
         String email = _emailText.getText().toString();
-        String mobile = _mobileText.getText().toString();
         String password = _passwordText.getText().toString();
         String reEnterPassword = _reEnterPasswordText.getText().toString();
 
         // TODO: Implement your own signup logic here.
+        Log.d("Message","Authenticating");
+        Ion.with(getApplicationContext())
+                .load("http://139.59.15.209:5000/auth/register")
+                .setBodyParameter("name", name)
+                .setBodyParameter("email", email)
+                .setBodyParameter("password", password)
+                .asString()
+                .setCallback(new FutureCallback<String>() {
+                    @Override
+                    public void onCompleted(Exception e, String result) {
+                        try {
+                            JSONObject json = new JSONObject(result);    // Converts the string "result" to a JSONObject
+                            Log.d("JSON", json.toString());
+                            String json_result = json.getString("status"); // Get the string "result" inside the Json-object
+                            if (json_result.equalsIgnoreCase("Success")){ // Checks if the "result"-string is equals to "ok"
+
+                                String customer_email = json.getString("email"); // I don't need to explain this one, right?
+                                Log.d(TAG, customer_email);
+                                Log.d("Message","Successful");
+                                onSignupSuccess();
+
+                            } else {
+                                // Result is NOT "OK"
+                                String error = json.getString("error");
+                                Toast.makeText(getApplicationContext(), "Signup Failed", Toast.LENGTH_LONG).show(); // This will show the user what went wrong with a toast
+                                finish();
+                                startActivity(getIntent());
+                                //Intent to_main = new Intent(getApplicationContext(), MainActivity.class); // New intent to MainActivity
+                                //startActivity(to_main); // Starts MainActivity
+                                //finish(); // Add this to prevent the user to go back to this activity when pressing the back button after we've opened MainActivity
+                            }
+                        } catch (JSONException err){
+                            // This method will run if something goes wrong with the json, like a typo to the json-key or a broken JSON.
+                            Log.e(TAG, err.getMessage());
+                            Toast.makeText(getApplicationContext(), "Please check your internet connection.", Toast.LENGTH_LONG).show();
+                        }
+                    }
+                });
+
 
         new android.os.Handler().postDelayed(
                 new Runnable() {
                     public void run() {
                         // On complete call either onSignupSuccess or onSignupFailed
                         // depending on success
-                        onSignupSuccess();
+                        //onSignupSuccess();
                         // onSignupFailed();
                         progressDialog.dismiss();
                     }
@@ -95,8 +138,10 @@ public class SignupActivity extends AppCompatActivity {
     }
     public void onSignupSuccess() {
         _signupButton.setEnabled(true);
-        setResult(RESULT_OK, null);
-        //finish();
+        Toast.makeText(this, "Registration Successful", Toast.LENGTH_SHORT).show();
+        Intent cart_info = new Intent(getApplicationContext(), CartInfo.class); // New intent to CartInfo
+        cart_info.putExtra("EMAIL", _emailText.getText().toString());
+        startActivity(cart_info); // Starts MainActivity
     }
 
     public void onSignupFailed() {
@@ -109,7 +154,6 @@ public class SignupActivity extends AppCompatActivity {
         boolean valid = true;
 
         String name = _nameText.getText().toString();
-        String mobile = _mobileText.getText().toString();
         String password = _passwordText.getText().toString();
         String reEnterPassword = _reEnterPasswordText.getText().toString();
 
@@ -118,14 +162,6 @@ public class SignupActivity extends AppCompatActivity {
             valid = false;
         } else {
             _nameText.setError(null);
-        }
-
-
-        if (mobile.isEmpty() || mobile.length()!=10) {
-            _mobileText.setError("Enter Valid Mobile Number");
-            valid = false;
-        } else {
-            _mobileText.setError(null);
         }
 
         if (password.isEmpty() || password.length() < 4 || password.length() > 10) {
