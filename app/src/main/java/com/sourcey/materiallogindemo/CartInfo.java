@@ -223,6 +223,8 @@ public class CartInfo extends AppCompatActivity implements SensorEventListener, 
     }
     public void orderCart() {
         if (cartAssigned){
+            direction = "Reverse";
+            Log.d("Direction",direction);
             cartID = 2;
             active_cart_text.setText("Active cart: "+Integer.toString(cartID));
             Log.d("CartID",Integer.toString(cartID));
@@ -338,10 +340,17 @@ public class CartInfo extends AppCompatActivity implements SensorEventListener, 
 
     public void getDistance(){
         try {
+            if (direction.equals("Reverse")){
+                cartID = cartID - 1;
+                numSteps = 1;
+            }
             RequestQueue requestQueue = Volley.newRequestQueue(this);
             String URL = "http://139.59.15.209:5000/sendDirection";
             Toast.makeText(CartInfo.this, direction+": "+numSteps, Toast.LENGTH_SHORT).show();
             JSONObject jsonBody = new JSONObject();
+            Log.d("dicrection",direction);
+            Log.d("distance",String.valueOf(Math.round(numSteps*76.2)));
+            Log.d("cartID",String.valueOf(cartID));
             jsonBody.put("direction", String.valueOf(direction));
             jsonBody.put("distance", String.valueOf(Math.round(numSteps*76.2)));
             jsonBody.put("cartID", cartID);
